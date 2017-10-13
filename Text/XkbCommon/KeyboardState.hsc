@@ -1,8 +1,8 @@
 {-# LANGUAGE CPP, ForeignFunctionInterface #-}
 
 module Text.XkbCommon.KeyboardState
-   ( KeyboardState, newKeyboardState, updateKeyboardStateKey, updateKeyboardStateMask, getOneKeySym, getStateSyms,
-     stateRemoveConsumed,
+    ( KeyboardState, newKeyboardState, updateKeyboardStateKey, updateKeyboardStateMask, getOneKeySym, getStateSyms, newKeyboardStateI,
+     stateRemoveConsumed, getStateSymsI,
 
      stateModNameIsActive, stateModIndexIsActive, stateLedNameIsActive, stateSerializeMods,
    ) where
@@ -26,6 +26,9 @@ newKeyboardState km = withKeymap km $
          l <- newForeignPtr c_unref_keyboard_state k
          return $ toKeyboardState l
 
+newKeyboardStateI :: Ptr CKeymap -> IO (Ptr CKeyboardState)
+newKeyboardStateI = c_new_keyboard_state
+
 -- | Update the keyboard state to reflect a given key being pressed or released. (@xkb_state_update_key@)
 updateKeyboardStateKey :: KeyboardState -> CKeycode -> Direction -> IO StateComponent
 updateKeyboardStateKey st key dir = withKeyboardState st $
@@ -44,7 +47,11 @@ getOneKeySym st key = withKeyboardState st $
 --
 --   (@xkb_state_key_get_syms@)
 getStateSyms :: KeyboardState -> CKeycode -> IO [Keysym]
-getStateSyms st key = withKeyboardState st $ \ ptr -> do
+getStateSyms st key = withKeyboardState st $ \ ptr ->
+   getStateSymsI ptr key
+
+getStateSymsI :: Ptr CKeyboardState -> CKeycode -> IO [Keysym]
+getStateSymsI ptr key = do
    init_ptr <- newArray [] :: IO (Ptr CKeysym)
    in_ptr <- new init_ptr
    num_out <- c_state_get_syms ptr key in_ptr

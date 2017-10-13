@@ -3,7 +3,7 @@
 module Text.XkbCommon.Keymap
    ( Keymap, RMLVO(..), noPrefs,
 
-     newKeymapFromNames, newKeymapFromString, keymapAsString, keymapNumLayouts,
+     newKeymapFromNames, newKeymapFromString, keymapAsString, keymapNumLayouts, newKeymapFromNamesI,
      keymapKeyNumLayouts, keymapNumMods, keymapModName, keymapModIdx, keymapKeyNumLevels,
      keymapNumLeds, keymapLeds, keymapModifiers,
      keymapLedName, keymapKeyRepeats
@@ -24,11 +24,17 @@ import Text.XkbCommon.InternalTypes
 --
 --   (@xkb_keymap_new_from_names@)
 newKeymapFromNames :: Context -> RMLVO -> IO (Maybe Keymap)
-newKeymapFromNames ctx rmlvo = withContext ctx $ \ ptr -> do
+newKeymapFromNames ctx rmlvo = do
+   ptr <- newKeymapFromNamesI ctx rmlvo
+   case ptr of
+      Nothing -> pure Nothing
+      Just x -> Just . toKeymap <$> newForeignPtr c_unref_keymap x
+
+newKeymapFromNamesI :: Context -> RMLVO -> IO (Maybe (Ptr CKeymap))
+newKeymapFromNamesI ctx rmlvo = withContext ctx $ \ ptr -> do
    crmlvo <- new rmlvo
    k <- c_keymap_from_names ptr crmlvo #{const XKB_MAP_COMPILE_PLACEHOLDER }
-   l <- newForeignPtr c_unref_keymap k
-   return (if k == nullPtr then Nothing else Just $ toKeymap l)
+   pure (if k == nullPtr then Nothing else Just $ k)
 
 -- | Create keymap from string buffer instead of loading from disk
 --   Immutable but creation can fail. not IO because it just parses a string.
