@@ -216,7 +216,7 @@ instance Storable CModIndex where
    alignment = Store.alignment unCModIndex
    peek = Store.peek CModIndex
    poke = Store.poke unCModIndex
-newtype CModMask = CModMask #{type xkb_mod_mask_t} deriving(Eq, Num, Show)
+newtype CModMask = CModMask #{type xkb_mod_mask_t} deriving(Eq, Num, Ord, Real, Enum, Integral, Show)
 -- | Modifier and layout types for state objects.
 --
 --   In XKB, the DEPRESSED components are also known as \'base\'.

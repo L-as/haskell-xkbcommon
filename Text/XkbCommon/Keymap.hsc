@@ -6,10 +6,11 @@ module Text.XkbCommon.Keymap
      newKeymapFromNames, newKeymapFromString, keymapAsString, keymapNumLayouts, newKeymapFromNamesI,
      keymapKeyNumLayouts, keymapNumMods, keymapModName, keymapModIdx, keymapKeyNumLevels,
      keymapNumLeds, keymapLeds, keymapModifiers,
-     keymapLedName, keymapKeyRepeats
+     keymapLedName, keymapKeyRepeats, keymapSymsByLevelI
    ) where
 
 import Control.Monad
+import Data.Maybe (mapMaybe)
 import Foreign
 import Foreign.C
 import qualified System.IO.Unsafe as S (unsafePerformIO)
@@ -112,7 +113,17 @@ keymapKeyNumLevels km kc idx = S.unsafePerformIO $ withKeymap km $ \ ptr -> c_ke
 
 -- Get the keysyms obtained from pressing a key in a given layout and shift level.
 -- c_keymap_syms_by_level :: Ptr CKeymap -> CKeycode -> CLayoutIndex -> CLevelIndex -> Ptr (Ptr CKeysym) -> IO CInt
--- TODO
+keymapSymsByLevelI :: Ptr CKeymap -> CKeycode -> CLayoutIndex -> CLevelIndex -> IO [Keysym]
+keymapSymsByLevelI keymap code layout level = do
+   init_ptr <- newArray [] :: IO (Ptr CKeysym)
+   in_ptr <- new init_ptr
+   num_out <- c_keymap_syms_by_level keymap code layout level in_ptr
+   deref_ptr <- peek in_ptr
+   out_list <- peekArray (fromIntegral num_out) deref_ptr
+   --free deref_ptr >> free in_ptr >> free init_ptr
+   free in_ptr >> free init_ptr
+   return $ mapMaybe safeToKeysym out_list
+
 
 -- | Get the leds of a keymap.
 keymapLeds :: Keymap -> [String]

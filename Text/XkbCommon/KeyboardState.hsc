@@ -4,7 +4,7 @@ module Text.XkbCommon.KeyboardState
     ( KeyboardState, newKeyboardState, updateKeyboardStateKey, updateKeyboardStateMask, getOneKeySym, getStateSyms, newKeyboardStateI,
      stateRemoveConsumed, getStateSymsI,
 
-     stateModNameIsActive, stateModIndexIsActive, stateLedNameIsActive, stateSerializeMods,
+     stateModNameIsActive, stateModIndexIsActive, stateLedNameIsActive, stateSerializeMods, keyGetLayoutI, keyGetConsumedMods2
    ) where
 
 import Foreign
@@ -63,6 +63,8 @@ getStateSymsI ptr key = do
 
 -- Get the effective layout index for a key in a given keyboard state.
 -- c_get_layout :: Ptr CKeyboardState -> CKeycode -> IO CLayoutIndex
+keyGetLayoutI :: Ptr CKeyboardState -> CKeycode -> IO CLayoutIndex
+keyGetLayoutI = c_get_layout
 
 -- Get the effective shift level for a key in a given keyboard state and layout.
 -- c_key_get_level :: Ptr CKeyboardState -> CKeycode -> CLayoutIndex -> IO CLevelIndex
@@ -118,6 +120,11 @@ stateLedNameIsActive st name = withKeyboardState st $ \ ptr ->
    withCString name $ \ cstr -> do
       out <- c_led_name_is_active ptr cstr
       return $ out > 0
+
+keyGetConsumedMods2 ::  Ptr CKeyboardState -> CKeycode -> IO CModMask
+keyGetConsumedMods2 state code =
+    c_key_get_consumed_mods2 state code #{const XKB_CONSUMED_MODE_XKB}
+
 
 -- Test whether a LED is active in a given keyboard state by index.
 -- c_led_index_is_active :: Ptr CKeyboardState -> CLedIndex -> IO CInt
@@ -218,3 +225,9 @@ foreign import ccall unsafe "xkbcommon/xkbcommon.h xkb_state_led_name_is_active"
 foreign import ccall unsafe "xkbcommon/xkbcommon.h xkb_state_led_index_is_active"
    c_led_index_is_active :: Ptr CKeyboardState -> CLedIndex -> IO CInt
 
+
+--xkb_mod_mask_t xkb_state_key_get_consumed_mods2(xkb_state_key_get_consumed_mods2struct xkb_state *state, xkb_keycode_t key, enum xkb_consumed_mode mode)
+--      Get the mask of modifiers consumed by translating a given key.
+
+foreign import ccall unsafe "xkbcommon/xkbcommon.h xkb_state_key_get_consumed_mods2"
+    c_key_get_consumed_mods2 :: Ptr CKeyboardState -> CKeycode -> CInt -> IO CModMask
