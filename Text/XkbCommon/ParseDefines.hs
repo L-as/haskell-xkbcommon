@@ -1,6 +1,8 @@
+{-# LANGUAGE TemplateHaskell #-}
 module Text.XkbCommon.ParseDefines
-   ( readHeader, getKeysymDefs, genKeysyms, genKeycodes, genModnames ) where
+    ( readHeader, getKeysymDefs, genKeysyms, genKeycodes, genModnames, getKeysymPats ) where
 
+import Data.Traversable (for)
 import Language.Haskell.TH
 import Language.Preprocessor.Cpphs
 import System.Process
@@ -8,6 +10,8 @@ import Data.List
 import Data.Maybe (isJust)
 import Data.Text (pack, unpack, toLower)
 import Control.Arrow
+
+import Text.XkbCommon.InternalTypes
 
 -- this function calls the c preprocessor to find out what the full path to a header file is.
 readHeader :: String -> IO (String, String)
@@ -26,6 +30,16 @@ getKeysymDefs = do
   let filtered_defs = filter (\ (name, _) -> isPrefixOf "XKB_KEY" name && notElem name exclude_defs) defs
   let parsed_defs = map (drop 8 *** read) filtered_defs
   return parsed_defs
+
+getKeysymPats :: Q [Dec]
+getKeysymPats = do
+    pats <- runIO getKeysymDefs
+    let keysymCon = 'Keysym
+    let ret = flip fmap pats $ \(name, value) ->
+            let thName = mkName ("Keysym_" ++ name)
+             in PatSynD thName (PrefixPatSyn []) ImplBidir (ConP keysymCon [LitP (IntegerL value)])
+
+    pure ret
 
 genKeysyms :: IO [Dec]
 genKeysyms = do

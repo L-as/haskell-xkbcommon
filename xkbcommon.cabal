@@ -190,6 +190,3 @@ Test-Suite stringcomp
   other-modules: Common
   main-is: stringcomp.hs
   build-depends : base, xkbcommon
-
-custom-setup
-  setup-depends: base, Cabal, cpphs, directory, filepath, process, template-haskell, text
