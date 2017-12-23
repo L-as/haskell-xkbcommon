@@ -1,4 +1,5 @@
 dist
+dist-newstyle
 cabal-dev
 *.o
 *.hi
@@ -11,4 +12,3 @@ tags
 *~
 .stack-work/
 stack.yaml
-Text/XkbCommon/KeysymPatterns.hs
