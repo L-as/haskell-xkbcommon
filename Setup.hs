@@ -1,6 +1,7 @@
 import Control.Arrow
 import Distribution.PackageDescription
-import Distribution.Simple
+import Distribution.Simple hiding (Module)
+import Distribution.Simple.PreProcess
 import Distribution.Simple.LocalBuildInfo
 import Language.Preprocessor.Cpphs
 import System.FilePath
@@ -13,16 +14,17 @@ import Utils
 sourceLoc :: FilePath
 sourceLoc = "./"
 
+preProc :: BuildInfo -> LocalBuildInfo -> PreProcessor
+preProc _ _ = PreProcessor
+    { platformIndependent = True
+    , runPreProcessor = mkSimplePreProcessor $ \_ outFile verbosity ->
+        generateSource outFile
+    }
+
 main :: IO ()
 main = defaultMainWithHooks simpleUserHooks
-       { buildHook = \p l h f -> generateSource sourceLoc >> buildHook simpleUserHooks p l h f
-       , haddockHook = \p l h f -> generateSource sourceLoc >> haddockHook simpleUserHooks p l h f
-       , sDistHook = \p ml h f -> case ml of
-           Nothing -> fail "No local buildinfo available. configure first"
-           Just l -> do
-             generateSource sourceLoc
-             sDistHook simpleUserHooks p ml h f
-       }
+    { hookedPreProcessors = [("empty", preProc)]
+    }
 
 generateSource :: FilePath -> IO ()
 generateSource fp = do

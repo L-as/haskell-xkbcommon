@@ -91,5 +91,5 @@ saveModule fp m = do
   createDirectoryIfMissing True folderPath
   writeFile filePath $ renderModule m
   where
-    filePath = fp </> replace "." [pathSeparator] (moduleName m) <.> "hs"
+    filePath = fp -- </> replace "." [pathSeparator] (moduleName m) <.> "hs"
     folderPath = intercalate [pathSeparator] . init $ splitOn [pathSeparator] filePath
