@@ -41,8 +41,13 @@ generateSource outFile = withFile outFile WriteMode $ \handle -> do
 sourceLoc :: FilePath
 sourceLoc = "./"
 
+#if MIN_VERSION_base(4, 10, 0)
+preProc :: BuildInfo -> LocalBuildInfo -> ComponentLocalBuildInfo  -> PreProcessor
+preProc _ _ _ = PreProcessor
+#else
 preProc :: BuildInfo -> LocalBuildInfo -> PreProcessor
 preProc _ _ = PreProcessor
+#endif
     { platformIndependent = True
     , runPreProcessor = mkSimplePreProcessor $ \_ outFile verbosity ->
         generateSource outFile
