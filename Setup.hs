@@ -1,8 +1,11 @@
-import Control.Arrow
+{-# LANGUAGE CPP #-}
 import Distribution.PackageDescription
 import Distribution.Simple hiding (Module)
 import Distribution.Simple.PreProcess
 import Distribution.Simple.LocalBuildInfo
+
+#ifdef VERSION_text
+import Control.Arrow
 import Language.Preprocessor.Cpphs
 import System.FilePath
 
@@ -10,21 +13,6 @@ import Text.XkbCommon.ParseDefines
 
 import Module
 import Utils
-
-sourceLoc :: FilePath
-sourceLoc = "./"
-
-preProc :: BuildInfo -> LocalBuildInfo -> PreProcessor
-preProc _ _ = PreProcessor
-    { platformIndependent = True
-    , runPreProcessor = mkSimplePreProcessor $ \_ outFile verbosity ->
-        generateSource outFile
-    }
-
-main :: IO ()
-main = defaultMainWithHooks simpleUserHooks
-    { hookedPreProcessors = [("empty", preProc)]
-    }
 
 generateSource :: FilePath -> IO ()
 generateSource fp = do
@@ -40,3 +28,27 @@ keysymsModule defs = Module "Text.XkbCommon.KeysymPatterns" [] $
                                    Nothing
                                    ("= Keysym " ++ show val))
                          defs
+#else
+
+import System.IO
+
+generateSource :: FilePath -> IO ()
+generateSource outFile = withFile outFile WriteMode $ \handle -> do
+    hPutStrLn handle "module Text.XkbCommon.KeysymPatterns where"
+
+#endif
+
+sourceLoc :: FilePath
+sourceLoc = "./"
+
+preProc :: BuildInfo -> LocalBuildInfo -> PreProcessor
+preProc _ _ = PreProcessor
+    { platformIndependent = True
+    , runPreProcessor = mkSimplePreProcessor $ \_ outFile verbosity ->
+        generateSource outFile
+    }
+
+main :: IO ()
+main = defaultMainWithHooks simpleUserHooks
+    { hookedPreProcessors = [("empty", preProc)]
+    }
