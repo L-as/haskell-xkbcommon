@@ -12,9 +12,8 @@ import Control.Arrow
 -- this function calls the c preprocessor to find out what the full path to a header file is.
 readHeader :: String -> IO (String, String)
 readHeader str = do
-  cpp_out <- readProcess "cpp" [] ("#include<" ++ str ++ ">")
-  -- parse output:
-  let headerfile = read $ head $ map ((!! 2) . words) (filter (isInfixOf str) $ lines cpp_out)
+  included_files <- readProcess "sh" ["-c", "cpp -H -o /dev/null 2>&1"] ("#include<" ++ str ++ ">")
+  let headerfile = drop 2 $ head $ lines included_files
   header <- readFile headerfile
   return (headerfile, header)
 
