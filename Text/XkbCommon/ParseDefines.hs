@@ -33,7 +33,7 @@ genKeysyms = do
 
 genKeycodes :: IO [Dec]
 genKeycodes = do
-   (headerFilename, keysyms_header) <- readHeader "linux/input.h"
+   (headerFilename, keysyms_header) <- readHeader "linux/input-event-codes.h"
    preprocessed <- cppIfdef headerFilename [] [] defaultBoolOptions keysyms_header
    (_, defs) <- macroPassReturningSymTab [] defaultBoolOptions preprocessed
    let exclude_defs = []
