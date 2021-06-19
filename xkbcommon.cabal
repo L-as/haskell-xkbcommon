@@ -132,7 +132,7 @@ library
   -- other-modules:
   build-depends:       base <5, transformers, storable-record, process, cpphs, template-haskell, text, bytestring, data-flags, filepath
   -- build-tools:         c2hs
-  extra-libraries: xkbcommon
+  pkgconfig-depends: xkbcommon
 
 -- this is actually not a test but a benchmark
 Benchmark bench-key-proc
